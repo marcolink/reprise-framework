@@ -8,6 +8,7 @@
 package reprise.external
 {
 	import flash.events.Event;
+	import flash.system.ApplicationDomain;
 	import flash.utils.getDefinitionByName;
 	import flash.utils.getQualifiedClassName;
 	import flash.utils.getTimer;
@@ -325,12 +326,21 @@ package reprise.external
 				return null;
 			}
 			m_attachMode = true;
+
 			//remove protocol
 			var symbolId:String = m_url.substr(9);
+
+			var definitionId : String = symbolId.split("/").join(".");
+			if (ApplicationDomain.currentDomain.hasDefinition(definitionId))
+			{
+				var classObject:Class = getDefinitionByName(definitionId) as Class;
+				return classObject;
+			}
 
 			//get FQCN name of assets class that contains the requested symbol
 			var pieces:Array = symbolId.split('/');
 			var className : String = pieces.shift();
+
 			try
 			{
 				var symbol : Object = getDefinitionByName(className);
