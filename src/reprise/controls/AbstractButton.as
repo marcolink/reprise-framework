@@ -219,7 +219,7 @@ package reprise.controls
 				event.stopImmediatePropagation();
 				return;
 			}
-			if (m_canBecomeKeyView)
+			if (m_canBecomeKeyView && m_rootElement)
 			{
 				m_rootElement.setFocusedElement(this, FocusManager.FOCUS_METHOD_MOUSE);
 			}
