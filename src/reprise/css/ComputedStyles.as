@@ -141,7 +141,12 @@ package reprise.css
 		
 		public var color : AdvancedColor;
 		
-		
+		public var soundRenderer : String;
+		public var soundId : String;
+		public var soundLoops : int;
+		public var soundVolume : Number;
+
+
 		/***************************************************************************
 		*							public methods								   *
 		***************************************************************************/

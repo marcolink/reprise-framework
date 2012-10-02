@@ -13,6 +13,7 @@ package reprise.core
 	import reprise.ui.renderers.AbstractTooltip;
 	import reprise.ui.renderers.DefaultBackgroundRenderer;
 	import reprise.ui.renderers.DefaultBorderRenderer;
+	import reprise.ui.renderers.DefaultSoundRenderer;
 	import reprise.ui.renderers.DefaultTooltipRenderer;
 	import reprise.ui.renderers.ICSSRenderer;	
 
@@ -35,9 +36,11 @@ package reprise.core
 		protected var m_borderRenderers : Object;
 		protected var m_backgroundRenderers : Object;
 		protected var m_tooltipRenderers : Object;
+		protected var m_soundRenderers : Object;
 		protected var m_defaultBorderRenderer : Class;
 		protected var m_defaultBackgroundRenderer : Class;
 		protected var m_defaultTooltipRenderer : Class;
+		protected var m_defaultSoundRenderer : Class;
 
 		
 		/***************************************************************************
@@ -52,6 +55,7 @@ package reprise.core
 			m_borderRenderers = {};
 			m_backgroundRenderers = {};
 			m_tooltipRenderers = {};
+			m_soundRenderers = {};
 			registerDefaultRenderers();
 		}
 		/**
@@ -112,7 +116,12 @@ package reprise.core
 		{
 			m_tooltipRenderers[id.toLowerCase()] = renderer;
 		}
-		
+
+		public function registerSoundRenderer(id : String, renderer : Class) : void
+		{
+			m_soundRenderers[id.toLowerCase()] = renderer;
+		}
+
 		public function registerDefaultBorderRenderer(renderer : Class) : void
 		{
 			m_defaultBorderRenderer = renderer;
@@ -126,6 +135,11 @@ package reprise.core
 		public function registerDefaultTooltipRenderer(renderer : Class) : void
 		{
 			m_defaultTooltipRenderer = renderer;
+		}
+
+		public function registerDefaultSoundRenderer(renderer : Class) : void
+		{
+			m_defaultSoundRenderer = renderer;
 		}
 		
 		/**
@@ -289,6 +303,20 @@ package reprise.core
 			}
 			return new renderer();
 		}
+
+		public function soundRendererById(id : String) : ICSSRenderer
+		{
+			if (id == null)
+			{
+				return new m_defaultSoundRenderer();
+			}
+			var renderer:Class = m_soundRenderers[id.toLowerCase()];
+			if (renderer == null)
+			{
+				renderer = m_defaultSoundRenderer;
+			}
+			return new renderer();
+		}
 		
 		/***************************************************************************
 		*							protected methods							   *
@@ -298,7 +326,8 @@ package reprise.core
 			m_defaultBorderRenderer = DefaultBorderRenderer;
 			m_defaultBackgroundRenderer = DefaultBackgroundRenderer;
 			m_defaultTooltipRenderer = DefaultTooltipRenderer;
-			
+			m_defaultSoundRenderer = DefaultSoundRenderer;
+
 			registerTagRenderer('p', Label);
 			registerTagRenderer('h1', Label);
 			registerTagRenderer('h2', Label);

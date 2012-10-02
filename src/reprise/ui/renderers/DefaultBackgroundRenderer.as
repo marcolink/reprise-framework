@@ -140,7 +140,7 @@ package reprise.ui.renderers
 		
 		
 		/***************************************************************************
-		*							protected methods								   *
+		*							protected methods							   *
 		***************************************************************************/
 		protected function clearBackgroundImage() : void
 		{

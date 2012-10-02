@@ -82,18 +82,18 @@ package reprise.ui
 			['borderBottomLeftRadius', false],
 			['borderBottomRightRadius', false]
 		];
-		protected static const CHILDREN_INVALIDATING_PROPERTIES : Object = 
+		protected static const CHILDREN_INVALIDATING_PROPERTIES : Object =
 		{
 			width : true,
 			height : true
 		};
-		
+
 		protected static const DEFAULT_SCROLLBAR_WIDTH : int = 16;
-		
+
 		protected static const IDENTITY_MATRIX : Matrix = new Matrix();
 		protected static const TRANSFORM_MATRIX : Matrix = new Matrix();
-		
-		
+
+
 		//attribute properties
 		protected var m_xmlDefinition : XML;
 		protected var m_nodeAttributes : Object;
@@ -101,7 +101,7 @@ package reprise.ui
 		protected var m_cssPseudoClasses : String = "";
 		protected var m_cssId : String = "";
 		protected var m_selectorPath : String;
-		
+
 		//style properties
 		protected var m_currentStyles : ComputedStyles;
 		protected var m_complexStyles : CSSDeclaration;
@@ -110,11 +110,11 @@ package reprise.ui
 		protected var m_weakStyles : CSSDeclaration;
 		protected var m_elementDefaultStyles : CSSDeclaration;
 		protected var m_changedStyleProperties : CSSPropertiesChangeList;
-		
+
 		protected var m_autoFlags : Object = {};
 		protected var m_positionInFlow : int = 1;
 		protected var m_positioningType : String;
-		
+
 		//validation properties
 		protected var m_stylesInvalidated : Boolean;
 		protected var m_dimensionsChanged : Boolean;
@@ -122,7 +122,7 @@ package reprise.ui
 		protected var m_selectorPathChanged : Boolean;
 		protected var m_oldContentBoxWidth : int;
 		protected var m_oldContentBoxHeight : int;
-		
+
 		//dimensions and position
 		protected var m_contentBoxWidth : int = 0;
 		protected var m_contentBoxHeight : int = 0;
@@ -135,15 +135,16 @@ package reprise.ui
 		protected var m_intrinsicHeight : int = -1;
 
 		protected var m_positionOffset : Point;
-		
+
 		//managers and renderers
 		protected var m_layoutManager : ILayoutManager;
 		protected var m_borderRenderer : ICSSRenderer;
 		protected var m_backgroundRenderer : ICSSRenderer;
-		
+		protected var _soundRenderer : ICSSRenderer;
+
 		//displays
 		protected var m_containingBlock : UIComponent;
-		
+
 		protected var m_lowerContentDisplay : Sprite;
 		protected var m_upperContentDisplay : Sprite;
 		protected var m_backgroundDisplay : Sprite;
@@ -152,13 +153,13 @@ package reprise.ui
 		protected var m_lowerContentMask : Sprite;
 		protected var m_frozenContent : BitmapData;
 		protected var m_frozenContentDisplay : Bitmap;
-		
+
 		protected var m_vScrollbar : Scrollbar;
 		public var m_hScrollbar : Scrollbar;
-		
+
 		protected var m_dropShadowFilter : DropShadowFilter;
-		
-		
+
+
 		/***************************************************************************
 		*							private properties							   *
 		***************************************************************************/
@@ -1710,6 +1711,7 @@ package reprise.ui
 			}
 			
 			applyTransform();
+			applySound();
 		}
 		protected override function finishValidation() : void
 		{
@@ -2411,7 +2413,22 @@ package reprise.ui
 			}
 			return xmlParser;
 		}
-		
+
+		protected function applySound() : void
+		{
+			if (m_currentStyles.soundId)
+			{
+				var soundRendererId : String =
+						m_currentStyles.soundRenderer || "";
+				if (!_soundRenderer || _soundRenderer.id() != soundRendererId)
+				{
+					_soundRenderer = m_rootElement.uiRendererFactory().soundRendererById(soundRendererId);
+					_soundRenderer.setStyles(m_currentStyles);
+					_soundRenderer.setComplexStyles(m_complexStyles);
+					_soundRenderer.draw();
+				}
+			}
+		}
 		
 		/**
 		 * draws the background rect and borders according to the styles 
