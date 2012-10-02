@@ -171,31 +171,37 @@ package reprise.debug
 			
 			_stage.addEventListener(MouseEvent.MOUSE_OVER, debugging_mouseOver, true, 100);
 			
-//			if (!m_debugConnection)
-//			{
-//				m_debugConnection = new LocalConnection();
-//				m_debugConnection.client = this;
-//
-//	            m_debugConnection.addEventListener(StatusEvent.STATUS, onStatus);
-//			}
-//
-//			m_clientConnectionName = '_repriseDebugClient_' + new Date().time;
-//			var test : Array = [{name:'document', elements:childTree(m_document)}];
-//			var bytes : ByteArray = new ByteArray();
-//			bytes.writeObject(test);
-//			bytes.position = 0;
+			if (!m_debugConnection)
+			{
+				m_debugConnection = new LocalConnection();
+				m_debugConnection.client = this;
+
+	            m_debugConnection.addEventListener(StatusEvent.STATUS, onStatus);
+			}
+
+			m_clientConnectionName = '_repriseDebugClient_' + new Date().time;
+			var test : Array = [{name:'document', elements:childTree(_instance._documentsByName["body_0"])}];
+			var bytes : ByteArray = new ByteArray();
+			bytes.writeObject(test);
+			bytes.position = 0;
+
+			log("i debugger tries to connect with the name: " + m_clientConnectionName);
+
 //			try
 //			{
-//				m_debugConnection.send(
-//					'_repriseDebugger', 'setRepriseDisplayList', bytes, m_clientConnectionName);
-//				m_clientConnection = new LocalConnection();
-//				m_clientConnection.allowDomain('*');
-//				m_clientConnection.connect(m_clientConnectionName);
-//				m_clientConnection.client = this;
+				m_debugConnection.send(
+					'_repriseDebugger', 'setRepriseDisplayList', bytes, m_clientConnectionName);
+				m_clientConnection = new LocalConnection();
+				m_clientConnection.allowDomain('*');
+				m_clientConnection.allowInsecureDomain('*');
+				m_clientConnection.connect(m_clientConnectionName);
+				m_clientConnection.client = this;
+
+				log("try to connect");
 //			}
 //			catch(error : Error)
 //			{
-//				log(error);
+//				trace("connection failed with error: " + error);
 //			}
 		}
 		protected function deactivateDebuggingMode() : void

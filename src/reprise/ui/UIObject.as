@@ -284,7 +284,7 @@ package reprise.ui
 			}
 			return child;
 		}
-		
+
 		protected function addChildToContentDisplay(child : UIObject, index : int) : void
 		{
 			m_contentDisplay.addChildAt(

@@ -8,7 +8,9 @@
 package reprise.events
 {
 	import flash.events.Event;
-	 
+
+	import reprise.events.DisplayEvent;
+
 	/**
 	 * @author Till Schneidereit
 	 */
@@ -33,13 +35,19 @@ package reprise.events
 			'documentValidationComplete';
 
 		
-		/***************************************************************************
+			/***************************************************************************
 		*							public methods								   *
 		***************************************************************************/
 		public function DisplayEvent(type:String, 
 			bubbles : Boolean = false, cancelable : Boolean = false)
 		{
 			super(type, bubbles, cancelable);
+		}
+
+		override public function clone() : Event
+		{
+			var event : DisplayEvent = new DisplayEvent(type,  bubbles, cancelable);
+			return event;
 		}
 	}
 }

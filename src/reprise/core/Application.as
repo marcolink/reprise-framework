@@ -186,12 +186,12 @@ package reprise.core
 			startApplication();
 		}
 		protected function createRootElement() : void
-		{
-			m_rootElement = new DocumentView();
-			m_rootElement.setApplicationContext(m_appContext);
-			addChild(m_rootElement);
-			m_rootElement.setParent(m_rootElement);
-		}
+	{
+		m_rootElement = new DocumentView();
+		m_rootElement.setApplicationContext(m_appContext);
+		addChild(m_rootElement);
+		m_rootElement.setParent(m_rootElement);
+	}
 
 		protected function startApplication() : void
 		{
