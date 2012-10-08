@@ -10,9 +10,10 @@ package reprise.css.propertyparsers
 		public static const KNOWN_PROPERTIES : Object =
 		{
 			sound : {parser : parseSound},
-			soundId : {parser : strToStringProperty},
+			soundId : {parser : strToURLProperty},
 			soundLoops : {parser : strToIntProperty},
-			soundVolume : {parser : strToNumericProperty}
+			soundVolume : {parser : strToNumericProperty},
+			soundDelay : {parser : strToIntProperty}
 		};
 		public static const SOUND_NONE : String = "none";
 

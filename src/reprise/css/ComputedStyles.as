@@ -145,6 +145,7 @@ package reprise.css
 		public var soundId : String;
 		public var soundLoops : int;
 		public var soundVolume : Number;
+		public var soundDelay : int;
 
 
 		/***************************************************************************

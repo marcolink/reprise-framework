@@ -100,6 +100,7 @@ package reprise.external
 			var useByteloader : Boolean;
 			var assetBytes : ByteArray;
 			// asset from library
+
 			if (m_url.indexOf('attach://') == 0)
 			{
 				var symbol : Class = resolveAttachSymbol();
