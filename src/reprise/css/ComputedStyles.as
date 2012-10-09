@@ -70,7 +70,7 @@ package reprise.css
 		public var opacity : Number = 1;
 		public var rotation : Number = 0;
 //		public var overflowY : String;
-//		public var overflowX : String;
+//		public var overf lowX : String;
 		public var tabIndex : int = 0;
 		public var blendMode : String = 'normal';
 		public var textShadowColor : AdvancedColor;

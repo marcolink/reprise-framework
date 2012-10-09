@@ -69,7 +69,7 @@ package reprise.ui.renderers
 				return;
 			}
 			_sound = _soundLoader.content();
-			_sound.play(0, m_styles.soundLoops || 0);
+			_sound.play(m_styles.soundDelay || 0, m_styles.soundLoops || 0);
 		}
 
 		private function clearSound () : void
