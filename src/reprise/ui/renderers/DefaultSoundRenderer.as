@@ -3,6 +3,7 @@ package reprise.ui.renderers
 
 	import flash.events.Event;
 	import flash.media.Sound;
+	import flash.media.SoundChannel;
 
 	import reprise.css.propertyparsers.Sound;
 	import reprise.events.ResourceEvent;
@@ -12,6 +13,7 @@ package reprise.ui.renderers
 	{
 		private var _soundLoader : MP3Resource;
 		private var _sound : flash.media.Sound;
+		private var _channel : SoundChannel;
 		//----------------------              Public Properties             ----------------------//
 
 
@@ -25,7 +27,10 @@ package reprise.ui.renderers
 		{
 			if (m_styles.soundId != reprise.css.propertyparsers.Sound.SOUND_NONE)
 			{
-				loadSound();
+				if(!_channel)
+				{
+					loadSound();
+				}
 			}
 		}
 
@@ -69,7 +74,14 @@ package reprise.ui.renderers
 				return;
 			}
 			_sound = _soundLoader.content();
-			_sound.play(m_styles.soundDelay || 0, m_styles.soundLoops || 0);
+			_channel = _sound.play(m_styles.soundDelay || 0, m_styles.soundLoops || 0);
+			_channel.addEventListener(Event.SOUND_COMPLETE, sound_complete);
+		}
+
+		private function sound_complete (event : Event) : void
+		{
+			_channel = null;
+			clearSound();
 		}
 
 		private function clearSound () : void

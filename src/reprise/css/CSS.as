@@ -58,7 +58,7 @@ package reprise.css
 		protected var m_parseTime : int;
 		protected var m_importsLoaded : int;
 		protected var m_importsTotal : int;
-		private var m_stylesheetURLs : Array;
+		protected var m_stylesheetURLs : Array;
 
 		
 		/***************************************************************************

@@ -131,6 +131,11 @@ package reprise.controls
 			{
 				stage.focus = this;
 			}
+			if(!value)
+			{
+				removeCSSClass("active");
+				removeCSSClass("hover");
+			}
 		}
 		
 		
