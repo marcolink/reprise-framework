@@ -203,7 +203,7 @@ package reprise.controls
 		}
 		protected function buttonDisplay_down(event : MouseEvent) : void
 		{
-			stage.addEventListener(MouseEvent.MOUSE_UP, buttonDisplay_up);
+			m_rootElement.addEventListener(MouseEvent.MOUSE_UP, buttonDisplay_up);
 			if (m_enabled)
 			{
 				addCSSPseudoClass("active");
