@@ -53,6 +53,7 @@ package reprise.ui
 		protected var m_tabIndex : int;
 	
 		protected var m_contentDisplay : DisplayObjectContainer;
+		protected var m_filterDisplay : DisplayObject;
 		protected var m_filters : Array;
 		
 		protected var m_canBecomeKeyView : Boolean;
@@ -774,7 +775,7 @@ package reprise.ui
 				return;
 			}
 			m_filters.push(filter);
-			m_contentDisplay.filters = m_filters;
+			m_filterDisplay.filters = m_filters;
 		}
 		
 		/**
@@ -799,7 +800,7 @@ package reprise.ui
 			if (filterIndex != -1)
 			{
 				m_filters.splice(filterIndex, 1);
-				m_contentDisplay.filters = m_filters;
+				m_filterDisplay.filters = m_filters;
 			}
 		}
 		
@@ -808,7 +809,7 @@ package reprise.ui
 		 */
 		public function clearFilters() : void
 		{
-			m_contentDisplay.filters = null;
+			m_filterDisplay.filters = null;
 		}
 		
 		/**
@@ -848,6 +849,7 @@ package reprise.ui
 			m_contentDisplay = new Sprite();
 			m_contentDisplay.mouseEnabled = false;
 			m_contentDisplay.name = 'content';
+            m_filterDisplay = m_contentDisplay;
 			super.addChild(m_contentDisplay);
 		}
 		

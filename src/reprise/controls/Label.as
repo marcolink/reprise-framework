@@ -181,6 +181,7 @@ package reprise.controls
 			m_contentDisplay.addEventListener(MouseEvent.MOUSE_MOVE, contentDisplay_mouseMove);
 			m_contentDisplay.addEventListener(MouseEvent.MOUSE_OUT, contentDisplay_mouseOut);
 			m_labelDisplay.addEventListener(TextEvent.LINK, labelDisplay_link);
+            m_filterDisplay = m_labelDisplay;
 		}
 		
 		protected override function initDefaultStyles() : void
@@ -935,6 +936,40 @@ package reprise.controls
 		{
 			draw();
 		}
+
+//        override public function addFilter(filter : Object) : void
+//        {
+//            if (!m_filters)
+//            {
+//                m_filters = [];
+//            }
+//            if (m_filters.indexOf(filter) != -1)
+//            {
+//                return;
+//            }
+//            m_filters.push(filter);
+//            m_labelDisplay.filters = m_filters;
+//        }
+//
+//        override public function removeFilter(filter : Object) : void
+//        {
+//            if (!m_filters)
+//            {
+//                return;
+//            }
+//            var filterIndex : int = m_filters.indexOf(filter);
+//            if (filterIndex != -1)
+//            {
+//                m_filters.splice(filterIndex, 1);
+//                m_labelDisplay.filters = m_filters;
+//            }
+//        }
+//
+//        override public function clearFilters() : void
+//        {
+//            m_labelDisplay.filters = null;
+//        }
+
 	}
 }
 
