@@ -32,7 +32,6 @@ package reprise.debug
 	import flash.net.LocalConnection;
 	import flash.utils.ByteArray;
 
-
     use namespace reprise;
 	
 	public class DebugInterface 
@@ -180,6 +179,11 @@ package reprise.debug
             var keys : Array = [];
             var raw : String = UIComponent(element).valueForKey('m_complexStyles');
 
+            if(!raw)
+            {
+                return keys;
+            }
+
             raw = raw.substring(raw.indexOf("{") + 1, raw.indexOf("}"));
             var styleParts : Array = raw.split("\n");
 
@@ -252,55 +256,74 @@ package reprise.debug
 
 			m_clientConnectionName = '_repriseDebugClient_' + new Date().time;
 
-            var documents : Array = [];
+            var segments : Array =  DebugHelper.getByteArraySegments(getDocumentTree(), 5000);
 
-            for each (var document : DocumentView in _instance._documentsByReference)
+            var count : int = 0;
+
+            for each(var ba : ByteArray in segments)
             {
-                var obj : Object =
-                {
-                    name : document.name,
-                            elements:childTree(document),
-                        isDocument: "1",
-                        path : document.toString(),
-                        selectorPath : document.selectorPath
-                };
-
-                documents.push(obj);
+                count++;
+                sendDocumentTree(ba, count == segments.length);
             }
+		}
 
-			var bytes : ByteArray = new ByteArray();
-			bytes.writeObject(documents);
-			bytes.position = 0;
-
-			log("i debugger tries to connect with the name: " + m_clientConnectionName);
-
-
-			try
-			{
-				m_debugConnection.send(
-                        repriseDisplayListDebugger, 'setDocuments', bytes, m_clientConnectionName);
-
+        private function sendDocumentTree(bytes : ByteArray, lastCall : Boolean) : void
+        {
+            try
+            {
+                m_debugConnection.send(repriseDisplayListDebugger, 'setDocuments', bytes, lastCall, m_clientConnectionName);
 
                 /* this one is just catching the errors */
+
+                if(m_clientConnection)
+                {
+                    return;
+                }
+
                 m_clientConnection = new LocalConnection();
 
                 m_clientConnection.addEventListener(StatusEvent.STATUS, onStatus);
                 m_clientConnection.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onStatus);
                 m_clientConnection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onStatus);
 
-				m_clientConnection.allowDomain('*');
-				m_clientConnection.allowInsecureDomain('*');
-				m_clientConnection.connect(m_clientConnectionName);
-				m_clientConnection.client = this;
+                m_clientConnection.allowDomain('*');
+                m_clientConnection.allowInsecureDomain('*');
+                m_clientConnection.connect(m_clientConnectionName);
+                m_clientConnection.client = this;
 
-				trace("try to connect " + repriseDisplayListDebugger);
-			}
-			catch(error : Error)
-			{
-				trace("connection to failed with error: " + error);
-				trace("connection to failed with error: " + error);
-			}
-		}
+                trace("try to connect " + repriseDisplayListDebugger);
+            }
+            catch (error : Error)
+            {
+                trace("connection to failed with error: " + error);
+                trace("connection to failed with error: " + error);
+            }
+        }
+
+        private function getDocumentTree() : ByteArray
+        {
+            var documents : Array = [];
+
+            for each (var document : DocumentView in _instance._documentsByReference)
+            {
+                var obj : Object =
+                {
+                    name: document.name,
+                    elements: childTree(document),
+                    isDocument: "1",
+                    path: document.toString(),
+                    selectorPath: document.selectorPath
+                };
+
+                documents.push(obj);
+            }
+            var sourceBytes : ByteArray = new ByteArray();
+            sourceBytes.writeObject(documents);
+            sourceBytes .position = 0;
+
+            return sourceBytes;
+        }
+
 		protected function deactivateDebuggingMode() : void
 		{
 			if (!m_debuggingMode)
@@ -334,18 +357,26 @@ package reprise.debug
 			return element;
 		}
 
-
         public function getChildrenForElement(path: String) : void
         {
-
             var rootElement : UIObject = elementForPath(path);
 
             var bytes : ByteArray = new ByteArray();
             bytes.writeObject(childTree(rootElement));
             bytes.position = 0;
 
-            m_debugConnection.send(
-                    repriseDisplayListDebugger, 'setChildrenForElement', bytes, path, m_clientConnectionName);
+            var segments : Array =  DebugHelper.getByteArraySegments(bytes, 5000);
+
+            var count : int = 0;
+
+            trace("Debug: setChildrenForElement by path: " + path);
+
+            for each(var ba : ByteArray in segments)
+            {
+                count++;
+                m_debugConnection.send(repriseDisplayListDebugger, 'setChildrenForElement', ba, count == segments.length, path, m_clientConnectionName);
+            }
+
         }
 
 		protected function childTree(root : UIObject) : Array
@@ -376,7 +407,7 @@ package reprise.debug
 		{
 			m_currentDebugElement = element;
 			m_debugInterface.graphics.clear();
-			if (!element)
+			if (!element || !element.selectorPath)
 			{
 				return '';
 			}
@@ -517,7 +548,21 @@ package reprise.debug
 				}
 				parent = parent.parent;
 			}
-			debugMarkElement(element);
+
+            if(element && element is UIComponent)
+            {
+                debugMarkElement(element);
+                try{
+//                    m_debugConnection.send(repriseDisplayListDebugger, 'selectElement',element.toString());
+                     sendDebugInfoObjectForElementPath(element.toString());
+                }
+                catch (e:Error)
+                {
+                    log("no debugger available");
+                }
+
+            }
+
 //			m_debugConnection.send(repriseDisplayListDebugger, 'showDetailsForElement',
 //				element.toString(), debugStr + '\n\nComplex styles:\n' +
 //					UIComponent(element).valueForKey('m_complexStyles'));
@@ -528,4 +573,36 @@ package reprise.debug
             trace("received status: " + event);
 		}
 	}
+}
+
+import flash.utils.ByteArray;
+
+internal class DebugHelper
+{
+
+    public static function getByteArraySegments(source : ByteArray, size: int = 1000) : Array
+    {
+        var result : Array = [];
+
+        if(!source)
+        {
+            return result;
+        }
+
+        var index : int = 0;
+        var total : int = Math.ceil(source.length / size);
+
+        while(index < total)
+        {
+            var sendBytes : ByteArray = new ByteArray();
+
+            source.position = index * size;
+            var currentLength : int =  Math.min(size, source.bytesAvailable);
+
+            sendBytes.writeBytes(source, source.position, currentLength);
+            index++;
+            result.push(sendBytes);
+        }
+        return result;
+    }
 }
