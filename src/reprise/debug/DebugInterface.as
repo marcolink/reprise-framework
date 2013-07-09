@@ -7,15 +7,19 @@
 
 package reprise.debug 
 {
-	import flash.display.Stage;
-	import flash.utils.Dictionary;
+
+    import flash.display.Stage;
+    import flash.events.AsyncErrorEvent;
+    import flash.events.SecurityErrorEvent;
+    import flash.utils.Dictionary;
 
 	import reprise.core.reprise;
 	import reprise.css.CSS;
-	import reprise.css.ComputedStyles;
+    import reprise.css.CSSProperty;
+    import reprise.css.ComputedStyles;
 	import reprise.events.DebugEvent;
 	import reprise.ui.DocumentView;
-	import reprise.ui.UIComponent;
+    import reprise.ui.UIComponent;
 	import reprise.ui.UIObject;
 
 	import flash.display.DisplayObject;
@@ -28,7 +32,8 @@ package reprise.debug
 	import flash.net.LocalConnection;
 	import flash.utils.ByteArray;
 
-	use namespace reprise;
+
+    use namespace reprise;
 	
 	public class DebugInterface 
 	{
@@ -36,7 +41,7 @@ package reprise.debug
 		*							protected properties						   *
 		***************************************************************************/
 		protected static const _instance : DebugInterface = new DebugInterface();
-
+		protected static const repriseDisplayListDebugger : String = "_ReDebugConsole";
 
 		protected var m_debuggingMode : Boolean;
 		protected var m_currentDebugElement : UIComponent;
@@ -127,10 +132,72 @@ package reprise.debug
 				msg += 'visible:\t\t' + element.visible + '\n';
 				msg += 'hidden anc:\t' + element.hasHiddenAncestors() + '\n';
 			}
-			m_debugConnection.send('_repriseDebugger', 'showDetailsForElement', path, msg);
+			m_debugConnection.send(repriseDisplayListDebugger, 'setDetailsForPath', path, msg);
 		}
-		
-		
+
+        public function sendDebugInfoObjectForElementPath(path : String) : void
+        {
+            var element : UIObject = elementForPath(path);
+            var result : Object = {};
+
+            if(element && element is UIComponent)
+            {
+                var keys : Array = extractCurrentStyleKeysForElement(UIComponent(element));
+
+
+                var styles : Array = [];
+
+                for each(var key:String in keys)
+                {
+                    var style : CSSProperty = UIComponent(element).debugStyles.getStyle(key);
+                    if(style)
+                    {
+                        styles.push(getObjectForCSSProperty(key,  style));
+                    }
+                }
+                result["styles"] = styles;
+                result["name"] = element.name;
+                result["path"] = element.toString();
+                result["selectorPath"]= UIComponent(element).selectorPath;
+
+            }
+            m_debugConnection.send(repriseDisplayListDebugger, 'setDetailsObjectForPath', path, result);
+        }
+
+        private function getObjectForCSSProperty(key: String, style : CSSProperty) : Object
+        {
+            var result : Object = {};
+            result["name"] = key;
+            result["specifiedValue"] = style.specifiedValue();
+            result["unit"] = style.unit();
+            result["selector"] = style.cssSelector();
+            result["file"] = style.cssFile();
+            return result;
+        }
+
+        protected function extractCurrentStyleKeysForElement(element:UIComponent) : Array
+        {
+            var keys : Array = [];
+            var raw : String = UIComponent(element).valueForKey('m_complexStyles');
+
+            raw = raw.substring(raw.indexOf("{") + 1, raw.indexOf("}"));
+            var styleParts : Array = raw.split("\n");
+
+            for each(var part : String in styleParts)
+            {
+                var key : String = part.split(":")[0];
+                if(key.length == 0)
+                {
+                    continue;
+                }
+
+                key = key.substr(1, key.length - 2);
+                keys.push(key);
+            }
+            return keys;
+        }
+
+
 		/***************************************************************************
 		*							protected methods							   *
 		***************************************************************************/
@@ -175,34 +242,64 @@ package reprise.debug
 			{
 				m_debugConnection = new LocalConnection();
 				m_debugConnection.client = this;
+                m_debugConnection.allowDomain('*');
+                m_debugConnection.allowInsecureDomain('*');
 
 	            m_debugConnection.addEventListener(StatusEvent.STATUS, onStatus);
+	            m_debugConnection.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onStatus);
+	            m_debugConnection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onStatus);
 			}
 
 			m_clientConnectionName = '_repriseDebugClient_' + new Date().time;
-			var test : Array = [{name:'document', elements:childTree(_instance._documentsByName["body_0"])}];
+
+            var documents : Array = [];
+
+            for each (var document : DocumentView in _instance._documentsByReference)
+            {
+                var obj : Object =
+                {
+                    name : document.name,
+                            elements:childTree(document),
+                        isDocument: "1",
+                        path : document.toString(),
+                        selectorPath : document.selectorPath
+                };
+
+                documents.push(obj);
+            }
+
 			var bytes : ByteArray = new ByteArray();
-			bytes.writeObject(test);
+			bytes.writeObject(documents);
 			bytes.position = 0;
 
 			log("i debugger tries to connect with the name: " + m_clientConnectionName);
 
-//			try
-//			{
+
+			try
+			{
 				m_debugConnection.send(
-					'_repriseDebugger', 'setRepriseDisplayList', bytes, m_clientConnectionName);
-				m_clientConnection = new LocalConnection();
+                        repriseDisplayListDebugger, 'setDocuments', bytes, m_clientConnectionName);
+
+
+                /* this one is just catching the errors */
+                m_clientConnection = new LocalConnection();
+
+                m_clientConnection.addEventListener(StatusEvent.STATUS, onStatus);
+                m_clientConnection.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onStatus);
+                m_clientConnection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onStatus);
+
 				m_clientConnection.allowDomain('*');
 				m_clientConnection.allowInsecureDomain('*');
 				m_clientConnection.connect(m_clientConnectionName);
 				m_clientConnection.client = this;
 
-				log("try to connect");
-//			}
-//			catch(error : Error)
-//			{
-//				trace("connection failed with error: " + error);
-//			}
+				trace("try to connect " + repriseDisplayListDebugger);
+			}
+			catch(error : Error)
+			{
+				trace("connection to failed with error: " + error);
+				trace("connection to failed with error: " + error);
+			}
 		}
 		protected function deactivateDebuggingMode() : void
 		{
@@ -236,7 +333,21 @@ package reprise.debug
 			}
 			return element;
 		}
-		
+
+
+        public function getChildrenForElement(path: String) : void
+        {
+
+            var rootElement : UIObject = elementForPath(path);
+
+            var bytes : ByteArray = new ByteArray();
+            bytes.writeObject(childTree(rootElement));
+            bytes.position = 0;
+
+            m_debugConnection.send(
+                    repriseDisplayListDebugger, 'setChildrenForElement', bytes, path, m_clientConnectionName);
+        }
+
 		protected function childTree(root : UIObject) : Array
 		{
 			var tree : Array = [];
@@ -248,7 +359,15 @@ package reprise.debug
 				{
 					continue;
 				}
-				tree.push({name : child.name, path : child.toString(), elements : childTree(child)});
+
+                var obj : Object = {name : child.name, path : child.toString(), elements : childTree(child)};
+
+                if(child is UIComponent)
+                {
+                    obj.selectorPath = UIComponent(child).selectorPath;
+                }
+				tree.push(obj);
+
 			}
 			return tree;
 		}
@@ -264,7 +383,7 @@ package reprise.debug
 			var style : ComputedStyles = element.style;
 			var autoFlags : Object = element.autoFlags;
 			var output : String = '\nElement: ' + element + 
-				'\nSelectorpath: ' + element.selectorPath.split('@').join('') + '\n' + 
+				'\nSelectorpath: ' + element.selectorPath.split('@').join('') + '\n' +
 				'position: ' + (style.position || 'static') + ', ';
 			output += 'top: ' + (autoFlags.top ? 'auto' : style.top + 'px') + 
 				', right: ' + (autoFlags.right ? 'auto' : style.right + 'px') + 
@@ -399,13 +518,14 @@ package reprise.debug
 				parent = parent.parent;
 			}
 			debugMarkElement(element);
-//			m_debugConnection.send('_repriseDebugger', 'showDetailsForElement',
+//			m_debugConnection.send(repriseDisplayListDebugger, 'showDetailsForElement',
 //				element.toString(), debugStr + '\n\nComplex styles:\n' +
 //					UIComponent(element).valueForKey('m_complexStyles'));
 		}
 		
-		protected function onStatus(event : StatusEvent) : void
+		protected function onStatus(event : Event) : void
 		{
+            trace("received status: " + event);
 		}
 	}
 }

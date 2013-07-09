@@ -888,7 +888,13 @@ package reprise.ui
 			m_instanceStyles.setStyle(name, value);
 			invalidateStyles();
 		}
-		
+
+
+        public function get debugStyles() : CSSDeclaration
+        {
+            return m_complexStyles.clone();
+        }
+
 		/**
 		 * @inheritDoc
 		 */
